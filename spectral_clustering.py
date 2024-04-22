@@ -12,6 +12,7 @@ from scipy.sparse import csr_matrix
 from scipy.sparse.csgraph import laplacian as csgraph_laplacian
 from scipy.sparse.linalg import eigsh
 from scipy.cluster.vq import kmeans, vq
+from scipy.special import comb
 
 ######################################################################
 #####     CHECK THE PARAMETERS     ########
@@ -39,60 +40,42 @@ def spectral(
     - ARI: float, adjusted Rand index
     - eigenvalues: eigenvalues of the Laplacian matrix
     """
-    data = np.load("question2_cluster_data.npy")
     sigma = params_dict['sigma']
     n_clusters = params_dict['k']
-    labels = np.load("question2_cluster_data.npy")
 
     # Calculate the affinity matrix using the Gaussian kernel
     affinity_matrix = np.exp(-cdist(data, data) ** 2 / (2. * sigma ** 2))
-    
-    # Convert the affinity matrix to a sparse format to make the subsequent calculations more efficient
     affinity_matrix_sparse = csr_matrix(affinity_matrix)
-    
-    # Compute the graph Laplacian matrix using the sparse affinity matrix
-    laplacian, _ = csgraph_laplacian(affinity_matrix_sparse, normed=False, return_diag=True)
-    
+
+    # Compute the graph Laplacian matrix
+    laplacian, diag = csgraph_laplacian(affinity_matrix_sparse, normed=False, return_diag=True)
+
     # Compute the first k eigenvectors of the graph Laplacian matrix
     eigenvalues, eigenvectors = eigsh(laplacian, k=n_clusters, which='SM')
-    
-    # Perform k-means clustering
+
+    # Perform k-means clustering on the rows of the eigenvectors
     centroids, _ = kmeans(eigenvectors, n_clusters)
     computed_labels, _ = vq(eigenvectors, centroids)
-    
+
     # Calculating SSE
     SSE = np.sum((data - centroids[computed_labels]) ** 2)
 
-    #Calculating ARI
-    # Create a contingency table
-    n = len(labels)
-    class_count = np.bincount(labels)
-    cluster_count = np.bincount(computed_labels)
-    contingency_matrix = np.zeros((len(class_count), len(cluster_count)), dtype=int)
-    for i in range(n):
-        contingency_matrix[labels[i], computed_labels[i]] += 1
-
-    # Sum over rows & columns of the contingency table
-    sum_comb_c = np.sum([sum(n_ij * (n_ij - 1) for n_ij in row) for row in contingency_matrix]) / 2.0
-    sum_comb_k = np.sum([sum(n_ij * (n_ij - 1) for n_ij in row) for row in contingency_matrix.T]) / 2.0
-    sum_comb = sum_comb_c + sum_comb_k
-
-    # Squared sum of all elements in the contingency table
-    square_sum = np.square(contingency_matrix).sum()
-    
-    # Calculate the products of the sums for rows & columns
-    prod_comb = np.sum(class_count * (class_count - 1)) * np.sum(cluster_count * (cluster_count - 1)) / 4.0
-    
-    # Calculate the ARI
-    ARI = (square_sum - sum_comb) / (prod_comb - sum_comb)
-
-
-    computed_labels: NDArray[np.int32] | None = None
-    SSE: float | None = None
-    ARI: float | None = None
-    eigenvalues: NDArray[np.floating] | None = None
+    # Calculating ARI
+    ARI = calculate_ari(labels, computed_labels)
 
     return computed_labels, SSE, ARI, eigenvalues
+
+def calculate_ari(labels_true, labels_pred):
+    """
+    Calculate the adjusted Rand index using a contingency matrix.
+    """
+    contingency_matrix = np.histogram2d(labels_true, labels_pred, bins=(np.max(labels_true)+1, np.max(labels_pred)+1))[0]
+    sum_comb_c = np.sum([comb(n, 2) for n in np.sum(contingency_matrix, axis=1)])
+    sum_comb_k = np.sum([comb(n, 2) for n in np.sum(contingency_matrix, axis=0)])
+    sum_comb = np.sum([comb(n, 2) for n in contingency_matrix.flatten()])
+    prod_comb = sum_comb_c * sum_comb_k / comb(len(labels_true), 2)
+    ARI = (sum_comb - prod_comb) / ((sum_comb_c + sum_comb_k) / 2 - prod_comb)
+    return ARI
 
 
 def spectral_clustering():
@@ -108,6 +91,26 @@ def spectral_clustering():
     # Return your `spectral` function
     answers["spectral_function"] = spectral
     
+    data = np.load('question2_cluster_data.npy')
+    data_labels = np.load('question2_cluster_labels.npy')
+    all_results = []
+    no_of_batches = len(data) // 10000
+    params_dict = {'sigma': 1.5, 'k': 5}
+    for i in range(no_of_batches + 1):  # Adding 1 to handle the remainder if any
+        start_index = 10000 * i
+        end_index = 10000 * (i + 1)
+
+        # Slice data and labels
+        batch_data = data[start_index:end_index]
+        batch_labels = data_labels[start_index:end_index]
+
+        # Check if there's data to process
+        if len(batch_data) > 0:
+            # Call the spectral function and append results
+            results = spectral(batch_data, batch_labels, params_dict)
+            all_results.append(results)
+            print(all_results)
+
     # Work with the first 10,000 data points: data[0:10000]
     # Do a parameter study of this data using Spectral clustering.
     # Minimmum of 10 pairs of parameters ('sigma' and 'xi').
