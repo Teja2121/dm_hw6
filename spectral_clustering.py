@@ -3,10 +3,15 @@ Work with Spectral clustering.
 Do not use global variables!
 """
 
-import matplotlib.pyplot as plt
+import pickle
 import numpy as np
 from numpy.typing import NDArray
-import pickle
+import matplotlib.pyplot as plt
+from scipy.spatial.distance import cdist
+from scipy.sparse import csr_matrix
+from scipy.sparse.csgraph import laplacian as csgraph_laplacian
+from scipy.sparse.linalg import eigsh
+from scipy.cluster.vq import kmeans, vq
 
 ######################################################################
 #####     CHECK THE PARAMETERS     ########
@@ -34,6 +39,53 @@ def spectral(
     - ARI: float, adjusted Rand index
     - eigenvalues: eigenvalues of the Laplacian matrix
     """
+    data = np.load("question2_cluster_data.npy")
+    sigma = params_dict['sigma']
+    n_clusters = params_dict['k']
+    labels = np.load("question2_cluster_data.npy")
+
+    # Calculate the affinity matrix using the Gaussian kernel
+    affinity_matrix = np.exp(-cdist(data, data) ** 2 / (2. * sigma ** 2))
+    
+    # Convert the affinity matrix to a sparse format to make the subsequent calculations more efficient
+    affinity_matrix_sparse = csr_matrix(affinity_matrix)
+    
+    # Compute the graph Laplacian matrix using the sparse affinity matrix
+    laplacian, _ = csgraph_laplacian(affinity_matrix_sparse, normed=False, return_diag=True)
+    
+    # Compute the first k eigenvectors of the graph Laplacian matrix
+    eigenvalues, eigenvectors = eigsh(laplacian, k=n_clusters, which='SM')
+    
+    # Perform k-means clustering
+    centroids, _ = kmeans(eigenvectors, n_clusters)
+    computed_labels, _ = vq(eigenvectors, centroids)
+    
+    # Calculating SSE
+    SSE = np.sum((data - centroids[computed_labels]) ** 2)
+
+    #Calculating ARI
+    # Create a contingency table
+    n = len(labels)
+    class_count = np.bincount(labels)
+    cluster_count = np.bincount(computed_labels)
+    contingency_matrix = np.zeros((len(class_count), len(cluster_count)), dtype=int)
+    for i in range(n):
+        contingency_matrix[labels[i], computed_labels[i]] += 1
+
+    # Sum over rows & columns of the contingency table
+    sum_comb_c = np.sum([sum(n_ij * (n_ij - 1) for n_ij in row) for row in contingency_matrix]) / 2.0
+    sum_comb_k = np.sum([sum(n_ij * (n_ij - 1) for n_ij in row) for row in contingency_matrix.T]) / 2.0
+    sum_comb = sum_comb_c + sum_comb_k
+
+    # Squared sum of all elements in the contingency table
+    square_sum = np.square(contingency_matrix).sum()
+    
+    # Calculate the products of the sums for rows & columns
+    prod_comb = np.sum(class_count * (class_count - 1)) * np.sum(cluster_count * (cluster_count - 1)) / 4.0
+    
+    # Calculate the ARI
+    ARI = (square_sum - sum_comb) / (prod_comb - sum_comb)
+
 
     computed_labels: NDArray[np.int32] | None = None
     SSE: float | None = None
@@ -55,7 +107,7 @@ def spectral_clustering():
 
     # Return your `spectral` function
     answers["spectral_function"] = spectral
-
+    
     # Work with the first 10,000 data points: data[0:10000]
     # Do a parameter study of this data using Spectral clustering.
     # Minimmum of 10 pairs of parameters ('sigma' and 'xi').
