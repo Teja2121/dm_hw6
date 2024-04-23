@@ -76,7 +76,7 @@ def spectral(
     - eigenvalues: eigenvalues of the Laplacian matrix
     """
     sigma = params_dict.get('sigma')
-    N = params_dict.get('N')
+    K = params_dict.get('K')
     
     # Construct the affinity matrix using the Gaussian kernel
     dists = squareform(pdist(data, 'euclidean'))
@@ -86,21 +86,21 @@ def spectral(
     L = laplacian(affinity_matrix, normed=True)
     
     # Compute the eigenvalues and eigenvectors
-    eigenvalues, eigenvectors = eigsh(L, k=N+1, which='SM', tol=1e-10)
-    eigenvectors = eigenvectors[:, 1:N+1]
+    eigenvalues, eigenvectors = eigsh(L, k=K+1, which='SM', tol=1e-10)
+    eigenvectors = eigenvectors[:, 1:K+1]
 
     # Repeatedly run k-means until all clusters have at least one point
     max_attempts = 10
     attempt = 0
     while attempt < max_attempts:
-        centroids, computed_labels = kmeans2(eigenvectors, k=N, minit='points')
+        centroids, computed_labels = kmeans2(eigenvectors, k=K, minit='points')
         # Check if any cluster is empty
-        if len(set(computed_labels)) == N:
+        if len(set(computed_labels)) == K:
             break
         attempt += 1
 
     # If after max_attempts there are still empty clusters, raise an error
-    if len(set(computed_labels)) < N:
+    if len(set(computed_labels)) < K:
         raise ValueError("One of the clusters is empty after several initialization attempts.")
 
     # Compute SSE in the eigenvector space
@@ -140,7 +140,7 @@ def spectral_clustering():
 
     data = np.load("question1_cluster_data.npy")
     data_labels = np.load("question1_cluster_labels.npy")
-    params_dict = {'sigma' : 0.1, 'N' : 5}
+    params_dict = {'sigma' : 0.1, 'K' : 5}
     results = []
 
     # Create a dictionary for each parameter pair ('sigma' and 'xi').
