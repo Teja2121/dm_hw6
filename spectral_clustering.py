@@ -146,7 +146,7 @@ def spectral_clustering():
     # Create a dictionary for each parameter pair ('sigma' and 'xi').
     groups = {}
 
-    for i in range(5):
+    for i in range(10):
     # Select i*1000 to (i+1)*1000 data points
         start_idx = i * 1000
         end_idx = (i + 1) * 1000
