@@ -138,8 +138,8 @@ def spectral_clustering():
     # Do a parameter study of this data using Spectral clustering.
     # Minimmum of 10 pairs of parameters ('sigma' and 'xi').
 
-    data = np.load("question2_cluster_data.npy")
-    data_labels = np.load("question2_cluster_labels.npy")
+    data = np.load("question1_cluster_data.npy")
+    data_labels = np.load("question1_cluster_labels.npy")
     params_dict = {'sigma' : 0.1, 'N' : 5}
     results = []
 
@@ -148,8 +148,8 @@ def spectral_clustering():
 
     for i in range(5):
     # Select i*1000 to (i+1)*1000 data points
-        start_idx = i * 10000
-        end_idx = (i + 1) * 10000
+        start_idx = i * 1000
+        end_idx = (i + 1) * 1000
         current_data = data[start_idx:end_idx]
         current_labels = data_labels[start_idx:end_idx]
     
