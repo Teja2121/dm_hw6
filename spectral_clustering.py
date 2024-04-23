@@ -141,11 +141,45 @@ def spectral_clustering():
     data = np.load("question2_cluster_data.npy")
     data_labels = np.load("question2_cluster_labels.npy")
     params_dict = {'sigma' : 0.1, 'N' : 5}
-    first_iter = spectral(data[0:1000], data_labels[0:1000], params_dict)
-    print(first_iter)
+    results = []
 
     # Create a dictionary for each parameter pair ('sigma' and 'xi').
     groups = {}
+
+    for i in range(5):
+    # Select i*1000 to (i+1)*1000 data points
+        start_idx = i * 10000
+        end_idx = (i + 1) * 10000
+        current_data = data[start_idx:end_idx]
+        current_labels = data_labels[start_idx:end_idx]
+    
+        # Run spectral clustering on the current subset of data
+        computed_labels, SSE, ARI, eigenvalues = spectral(current_data, current_labels, params_dict)
+    
+        # Print the results for the current iteration
+        print(f"Iteration {i}:")
+        print(f"Computed labels: {computed_labels}")
+        print(f"SSE: {SSE}")
+        print(f"ARI: {ARI}")
+        print(f"Eigenvalues: {eigenvalues}\n")
+
+        groups[i] = {"sigma": params_dict['sigma'], "ARI": ARI, "SSE": SSE}
+
+        # Store the results
+        results.append((computed_labels, ARI, SSE, eigenvalues))
+
+    print("The results are: ")
+    print(results)
+
+    """
+    groups[0] = {"sigma": 0.1, "ARI": 0.21096776847945933, "SSE": 2.6350271759830726}
+    groups[1] = {"sigma": 0.1, "ARI": 0.20840713991117343, "SSE": 2.4865596286664804}
+    groups[2] = {"sigma": 0.1, "ARI": 0.20172900976999752, "SSE": 2.5131264943464897}
+    groups[3] = {"sigma": 0.1, "ARI": 0.272251945917069, "SSE": 2.6164999257616106}
+    groups[4] = {"sigma": 0.1, "ARI": 0.28337294094536675, "SSE": 2.12272695788916}
+    """
+    print("Printing Groups: ")
+    print(groups)
 
     # For the spectral method, perform your calculations with 5 clusters.
     # In this cas,e there is only a single parameter, σ.
@@ -164,6 +198,7 @@ def spectral_clustering():
     # Identify the cluster with the lowest value of ARI. This implies
     # that you set the cluster number to 5 when applying the spectral
     # algorithm.
+
 
     # Create two scatter plots using `matplotlib.pyplot`` where the two
     # axes are the parameters used, with \sigma on the horizontal axis
