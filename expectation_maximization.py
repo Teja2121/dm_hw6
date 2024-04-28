@@ -387,9 +387,10 @@ def gaussian_mixture(random_state=42): ##added random state 42 for reproducabili
     plt.xlabel("Iteration")
     plt.ylabel("Log Likelihood")
     plt.grid(True)
+    plt.savefig("Question_2_plot_log_likelihood.pdf")
     plt.show() ## added this extra line to show the plot
     answers["plot_log_likelihood"] = plot_likelihood
-    plt.savefig("plot_log_likelihood.pdf")
+    
 
     # --------------------------------------------------------------
     # 10 trials of 5000 points each ##Changed to 5000 points
