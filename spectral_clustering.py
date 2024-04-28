@@ -8,51 +8,126 @@ import numpy as np
 from numpy.typing import NDArray
 import pickle
 import scipy
-from scipy.spatial.distance import cdist, pdist, squareform
-from scipy.sparse import csr_matrix
-from scipy.sparse.csgraph import laplacian
-from scipy.sparse.linalg import eigsh
-from scipy.cluster.vq import kmeans2, vq
-from scipy.special import comb
 
 ######################################################################
 #####     CHECK THE PARAMETERS     ########
 ######################################################################
-
-def calculate_ari(labels_true, labels_pred):
+def confusion_matrix(true_labels, predicted_labels): ## implemented confusion matrix
     """
-    Calculate the Adjusted Rand Index (ARI) given the true and predicted labels.
-    
+    Compute the confusion matrix for a two-class problem.
+
     Parameters:
-    - labels_true : array-like, shape (n_samples,)
-        True cluster labels
-    - labels_pred : array-like, shape (n_samples,)
-        Cluster labels predicted by the algorithm
-    
+    - true_labels: The true labels of the data points.
+    - predicted_labels: The predicted labels of the data points.
+
     Returns:
-    - ari : float
-        The Adjusted Rand Index score
+    - A 2x2 numpy array representing the confusion matrix.
+      [[true positive, false negative],
+       [false positive, true negative]]
     """
-    # Contingency table: Counting the number of common occurrences
-    contingency_matrix = np.histogram2d(labels_true, labels_pred, bins=(np.unique(labels_true).size,
-                                                                        np.unique(labels_pred).size))[0]
+    # Initialize the confusion matrix to zeros
+    confusion = np.zeros((2, 2), dtype=int)
 
-    # Sum over rows & columns
-    sum_comb_c = np.sum([comb(n_c, 2) for n_c in np.sum(contingency_matrix, axis=1)])
-    sum_comb_k = np.sum([comb(n_k, 2) for n_k in np.sum(contingency_matrix, axis=0)])
+    # True positives (TP)
+    confusion[0, 0] = np.sum((true_labels == 1) & (predicted_labels == 1))
 
-    # Sum over the whole matrix & calculate the combinatorial of all elements
-    sum_comb = np.sum([comb(n_ij, 2) for n_ij in contingency_matrix.flatten()])
-    comb_all = comb(np.sum(contingency_matrix), 2)
+    # True negatives (TN)
+    confusion[1, 1] = np.sum((true_labels == 0) & (predicted_labels == 0))
 
-    # Compute the expected index (as per the ARI formula)
-    expected_index = sum_comb_c * sum_comb_k / comb_all
-    max_index = (sum_comb_c + sum_comb_k) / 2
+    # False positives (FP)
+    confusion[1, 0] = np.sum((true_labels == 0) & (predicted_labels == 1))
+
+    # False negatives (FN)
+    confusion[0, 1] = np.sum((true_labels == 1) & (predicted_labels == 0))
+
+    return confusion
+
+def compute_SSE(data, labels):
+    """
+    Calculate the sum of squared errors (SSE) for a clustering.
+
+    Parameters:
+    - data: numpy array of shape (n, 2) containing the data points
+    - labels: numpy array of shape (n,) containing the cluster assignments
+
+    Returns:
+    - sse: the sum of squared errors
+    """
+    sse = 0.0
+    for i in np.unique(labels):
+        cluster_points = data[labels == i]
+        cluster_center = np.mean(cluster_points, axis=0)
+        sse += np.sum((cluster_points - cluster_center) ** 2)
+    return sse
+
+def adjusted_rand_index(labels_true, labels_pred) -> float:
+    """
+    Compute the adjusted Rand index.
+
+    Parameters:
+    - labels_true: The true labels of the data points.
+    - labels_pred: The predicted labels of the data points.
+
+    Returns:
+    - ari: The adjusted Rand index value.
+
+    The adjusted Rand index is a measure of the similarity between two data clusterings.
+    It takes into account both the similarity of the clusters themselves and the similarity
+    of the data points within each cluster. The adjusted Rand index ranges from -1 to 1,
+    where a value of 1 indicates perfect agreement between the two clusterings, 0 indicates
+    random agreement, and -1 indicates complete disagreement.
+    """
+    # Create contingency table
+    contingency_table = np.histogram2d(
+        labels_true,
+        labels_pred,
+        bins=(np.unique(labels_true).size, np.unique(labels_pred).size),
+    )[0]
+
+    # Sum over rows and columns
+    sum_combinations_rows = np.sum(
+        [np.sum(nj) * (np.sum(nj) - 1) / 2 for nj in contingency_table]
+    )
+    sum_combinations_cols = np.sum(
+        [np.sum(ni) * (np.sum(ni) - 1) / 2 for ni in contingency_table.T]
+    )
+
+    # Sum of combinations for all elements
+    N = np.sum(contingency_table)
+    sum_combinations_total = N * (N - 1) / 2
 
     # Calculate ARI
-    ari = (sum_comb - expected_index) / (max_index - expected_index)
+    ari = (
+        np.sum([np.sum(n_ij) * (np.sum(n_ij) - 1) / 2 for n_ij in contingency_table])
+        - (sum_combinations_rows * sum_combinations_cols) / sum_combinations_total
+    ) / (
+        (sum_combinations_rows + sum_combinations_cols) / 2
+        - (sum_combinations_rows * sum_combinations_cols) / sum_combinations_total
+    )
 
     return ari
+
+#extract random samples from the data
+def extract_samples(
+    data: NDArray[np.floating], labels: NDArray[np.int32], num_samples: int
+) -> tuple[NDArray[np.floating], NDArray[np.int32]]:
+    """
+    Extract random samples from data and labels.
+
+    Arguments:
+    - data: numpy array of shape (n, 2)
+    - labels: numpy array of shape (n,)
+    - num_samples: number of samples to extract
+
+    Returns:
+    - data_samples: numpy array of shape (num_samples, 2)
+    - label_samples: numpy array of shape (num_samples,)
+    """
+    indices = np.random.choice(data.shape[0], size=num_samples, replace=False)
+    data_samples = data[indices]
+    label_samples = labels[indices]
+    return data_samples, label_samples
+
 
 def spectral(
     data: NDArray[np.floating], labels: NDArray[np.int32], params_dict: dict
@@ -75,55 +150,17 @@ def spectral(
     - ARI: float, adjusted Rand index
     - eigenvalues: eigenvalues of the Laplacian matrix
     """
-    sigma = params_dict.get('sigma')
-    K = params_dict.get('K')
-    
-    # Construct the affinity matrix using the Gaussian kernel
-    dists = squareform(pdist(data, 'euclidean'))
-    affinity_matrix = np.exp(-dists ** 2 / sigma)
-    
-    # Compute the Laplacian
-    L = laplacian(affinity_matrix, normed=True)
-    
-    # Compute the eigenvalues and eigenvectors
-    eigenvalues, eigenvectors = eigsh(L, k=K+1, which='SM', tol=1e-10)
-    eigenvectors = eigenvectors[:, 1:K+1]
 
-    # Repeatedly run k-means until all clusters have at least one point
-    max_attempts = 10
-    attempt = 0
-    while attempt < max_attempts:
-        centroids, computed_labels = kmeans2(eigenvectors, k=K, minit='points')
-        # Check if any cluster is empty
-        if len(set(computed_labels)) == K:
-            break
-        attempt += 1
-
-    # If after max_attempts there are still empty clusters, raise an error
-    if len(set(computed_labels)) < K:
-        raise ValueError("One of the clusters is empty after several initialization attempts.")
-
-    # Compute SSE in the eigenvector space
-    distances_to_centroids = cdist(eigenvectors, centroids)
-    min_distances = np.min(distances_to_centroids, axis=1)
-    SSE = np.sum(min_distances ** 2)
-    
-    # Compute ARI if ground truth labels are provided
-    ARI = calculate_ari(labels, computed_labels)
-
-    """
     computed_labels: NDArray[np.int32] | None = None
     SSE: float | None = None
     ARI: float | None = None
     eigenvalues: NDArray[np.floating] | None = None
-    """
 
     return computed_labels, SSE, ARI, eigenvalues
 
-
 def spectral_clustering():
     """
-    Performs spectral clustering on a dataset.
+    Performs DENCLUE clustering on a dataset.
 
     Returns:
         answers (dict): A dictionary containing the clustering results.
@@ -138,48 +175,8 @@ def spectral_clustering():
     # Do a parameter study of this data using Spectral clustering.
     # Minimmum of 10 pairs of parameters ('sigma' and 'xi').
 
-    data = np.load("question1_cluster_data.npy")
-    data_labels = np.load("question1_cluster_labels.npy")
-    params_dict = {'sigma' : 0.1, 'K' : 5}
-    results = []
-
     # Create a dictionary for each parameter pair ('sigma' and 'xi').
     groups = {}
-
-    for i in range(10):
-    # Select i*1000 to (i+1)*1000 data points
-        start_idx = i * 1000
-        end_idx = (i + 1) * 1000
-        current_data = data[start_idx:end_idx]
-        current_labels = data_labels[start_idx:end_idx]
-    
-        # Run spectral clustering on the current subset of data
-        computed_labels, SSE, ARI, eigenvalues = spectral(current_data, current_labels, params_dict)
-    
-        # Print the results for the current iteration
-        print(f"Iteration {i}:")
-        print(f"Computed labels: {computed_labels}")
-        print(f"SSE: {SSE}")
-        print(f"ARI: {ARI}")
-        print(f"Eigenvalues: {eigenvalues}\n")
-
-        groups[i] = {"sigma": params_dict['sigma'], "ARI": ARI, "SSE": SSE}
-
-        # Store the results
-        results.append((computed_labels, ARI, SSE, eigenvalues))
-
-    print("The results are: ")
-    print(results)
-
-    """
-    groups[0] = {"sigma": 0.1, "ARI": 0.21096776847945933, "SSE": 2.6350271759830726}
-    groups[1] = {"sigma": 0.1, "ARI": 0.20840713991117343, "SSE": 2.4865596286664804}
-    groups[2] = {"sigma": 0.1, "ARI": 0.20172900976999752, "SSE": 2.5131264943464897}
-    groups[3] = {"sigma": 0.1, "ARI": 0.272251945917069, "SSE": 2.6164999257616106}
-    groups[4] = {"sigma": 0.1, "ARI": 0.28337294094536675, "SSE": 2.12272695788916}
-    """
-    print("Printing Groups: ")
-    print(groups)
 
     # For the spectral method, perform your calculations with 5 clusters.
     # In this cas,e there is only a single parameter, σ.
@@ -198,7 +195,6 @@ def spectral_clustering():
     # Identify the cluster with the lowest value of ARI. This implies
     # that you set the cluster number to 5 when applying the spectral
     # algorithm.
-
 
     # Create two scatter plots using `matplotlib.pyplot`` where the two
     # axes are the parameters used, with \sigma on the horizontal axis
