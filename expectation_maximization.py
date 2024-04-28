@@ -55,9 +55,9 @@ def compute_SSE(data, labels):
         sse += np.sum((cluster_points - cluster_center) ** 2)
     return sse
 
-
+"""
 def compute_ARI(confusion_matrix: NDArray[np.int32]):
-    """
+
     Compute the Adjusted Rand Index (ARI) metric for evaluating the performance of a clustering algorithm.
     (I AM NOT CONVINCED THE RESULTS ARE CORRECT)
 
@@ -79,13 +79,14 @@ def compute_ARI(confusion_matrix: NDArray[np.int32]):
     - tn: True negatives (number of pairs of samples that are not in the same cluster in both the true and predicted labels)
     - fp: False positives (number of pairs of samples that are in the same cluster in the true labels but not in the predicted labels)
     - fn: False negatives (number of pairs of samples that are not in the same cluster in the true labels but in the predicted labels)
-    """
+
     tp = confusion_matrix[0, 0]
     tn = confusion_matrix[1, 1]
     fp = confusion_matrix[0, 1]
     fn = confusion_matrix[1, 0]
     ari = (tp * tn - fp * fn) / np.sqrt((tp + fp) * (tp + fn) * (tn + fp) * (tn + fn))
     return ari
+"""
 
 
 def adjusted_rand_index(labels_true, labels_pred) -> float:
@@ -298,7 +299,7 @@ def em_algorithm(data: NDArray[np.floating], max_iter: int = 100) -> tuple[
 
 
 # ----------------------------------------------------------------------
-def gaussian_mixture():
+def gaussian_mixture(random_state=42): ##added random state 42 for reproducability
     """
     Calculate the parameters of a Gaussian mixture model using the EM algorithm.
     Specialized to two distributions.
@@ -309,6 +310,8 @@ def gaussian_mixture():
     # label file name: "question2_cluster_labels.npy"
     data = np.load("question2_cluster_data.npy")
     labels = np.load("question2_cluster_labels.npy")
+
+    np.random.seed(random_state) ## added random state
 
     print(f"Data shape: {data.shape}")
     print(f"Labels shape: {labels.shape}")
