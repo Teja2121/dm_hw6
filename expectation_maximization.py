@@ -3,6 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from numpy.typing import NDArray
 from sklearn.metrics import confusion_matrix
+import scipy
 
 # ----------------------------------------------------------------------
 
@@ -284,7 +285,7 @@ def gaussian_mixture():
     print(f"Data shape: {data.shape}")
     print(f"Labels shape: {labels.shape}")
 
-    def sample_estimate(data, labels, nb_samples=10000, max_iter=100):
+    def sample_estimate(data, labels, nb_samples=5000, max_iter=100): ## change made here from 10000 to 5000
         # ADD STUDENT CODE
         data_samples, label_samples = extract_samples(data, labels, nb_samples)
         weights, means, covariances, log_likelihoods, predicted_labels = em_algorithm(
@@ -322,7 +323,7 @@ def gaussian_mixture():
         return weights, means, covariances, log_likelihoods, confusion_mat, ARI, SSE
 
     # Call the function
-    data_samples, label_samples = extract_samples(data, labels, 10000)
+    data_samples, label_samples = extract_samples(data, labels, 5000)
 
     print(f"Data shape: {data_samples.shape}")
     print(f"Labels shape: {label_samples.shape}")
@@ -355,13 +356,14 @@ def gaussian_mixture():
     plt.xlabel("Iteration")
     plt.ylabel("Log Likelihood")
     plt.grid(True)
+    plt.show() ## added this extra line to show the plot
     answers["plot_log_likelihood"] = plot_likelihood
     plt.savefig("plot_log_likelihood.pdf")
 
     # --------------------------------------------------------------
-    # 10 trials of 10,000 points each
+    # 10 trials of 5000 points each ##Changed to 5000 points
     nb_trials = 10
-    nb_samples = 10000
+    nb_samples = 5000 ## changed to 5000 points 
     max_iter = max_iter
 
     means_lst = []
@@ -433,6 +435,9 @@ def gaussian_mixture():
 
     # Return a 2x2 numpy Array of floats. Average of the confusion matrices of the 10 trials
     answers["average_confusion_matrix"] = np.mean(confusion_lst, axis=0)
+    print(f"{confusion_lst=}")
+    print(f"Average confusion matrix : {np.mean(confusion_lst, axis=0)}")
+    print(f"Standard confusion matrix : {np.std(confusion_lst, axis=0)}")
 
     # Return a 2x2 numpy Array of floats. Standard deviation of the confusion matrices of the 10 trials
     # This means to take the standard deviation of each element of the confusion matrix.
@@ -441,18 +446,19 @@ def gaussian_mixture():
 
     # Return a list of 10 ARIs (float), one for each sample of 5,000 points
     answers["ARI"] = ARI_lst
+    print(f"{ARI_lst=}") ## added a print statement
 
     # Return a list of 10 SSEs (float), one for each sample of 5,000 points
     answers["SSE"] = SSE_lst
-    # print(f"{SSE_lst=}")
+    print(f"{SSE_lst=}") ## uncommented print statement
 
     # Return the mean and standard deviation of the 10 trials (of 5000 points each)
     answers["avg_std_ARI"] = [avg_ARI, std_ARI]
-    # print(f"{avg_ARI=}, {std_ARI=} ")
+    print(f"{avg_ARI=}, {std_ARI=} ") ## uncommented print statement
 
     # Return the mean and standard deviation of the 10 trials (of 5000 points each)
     answers["avg_std_SSE"] = [avg_SSE, std_SSE]
-    # print(f"{avg_SSE=}, {std_SSE=}")
+    print(f"{avg_SSE=}, {std_SSE=}") ## uncommented print statement
 
     return answers
 
