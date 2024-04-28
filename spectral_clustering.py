@@ -289,6 +289,7 @@ def spectral_clustering(random_state = 42):
     # groups is the dictionary above
     answers["cluster parameters"] = groups
     answers["1st group, SSE"] = {}
+    # answers["1st group, SSE"] = slices_results
 
     # Identify the cluster with the lowest value of ARI. This implies
     # that you set the cluster number to 5 when applying the spectral
@@ -328,7 +329,7 @@ def spectral_clustering(random_state = 42):
         plt.show()
         
     
-    plot_clustering(data_slice, label_slice, "Question 1 - Spectral - Clustering Result for 1000 random points")
+    plot_clustering(data_slice, computed_labels, "Question 1 - Spectral - Clustering Result for 1000 random points")
 
     # Scatter plot colored by SSE values
     plt.figure(figsize=(10, 5))
@@ -390,13 +391,13 @@ def spectral_clustering(random_state = 42):
     data_samples, label_samples = extract_samples(data, labels, 1000)  # Adjust number of samples as needed
 
     # Cluster with largest ARI
-    computed_labels, _, _, _ = spectral(data_samples, label_samples, {'sigma': best_ari_sigma, 'k': 5})
-    plot_cluster_results_ARI(data_samples, computed_labels, f"Question 1 - Spectral - Clustering Result with Largest ARI (Sigma={best_ari_sigma})")
+    computed_labels, _, _, _ = spectral(data_samples, label_samples, {'sigma': best_ari_sigma, 'k': 5}) ## change here
+    plot_cluster_results_ARI(data_samples, computed_labels, f"Question 1 - Spectral - Clustering Result with Largest ARI for 1000 points(Sigma={best_ari_sigma})")
     
 
     # Cluster with smallest SSE
-    computed_labels, _, _, _ = spectral(data_samples, label_samples, {'sigma': best_sse_sigma, 'k': 5})
-    plot_cluster_results_SSE(data_samples, computed_labels, f"Question 1 - Spectral - Clustering Result with Smallest SSE (Sigma={best_sse_sigma})")
+    computed_labels, _, _, _ = spectral(data_samples, label_samples, {'sigma': best_sse_sigma, 'k': 5}) ## change here
+    plot_cluster_results_SSE(data_samples, computed_labels, f"Question 1 - Spectral - Clustering Result with Smallest SSE for 1000 points(Sigma={best_sse_sigma})")
 
     # Pick the parameters that give the largest value of ARI, and apply these
     # parameters to datasets 1, 2, 3, and 4. Compute the ARI for each dataset.
