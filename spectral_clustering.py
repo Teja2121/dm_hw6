@@ -403,16 +403,16 @@ def spectral_clustering(random_state = 42):
     # Calculate mean and standard deviation of ARI for all five datasets.
 
     # A single float
-    answers["mean_ARIs"] = 0.8999358120061369
+    answers["mean_ARIs"] = mean_ari
 
     # A single float
-    answers["std_ARIs"] = 0.03744220891570666
+    answers["std_ARIs"] = std_ari
 
     # A single float
-    answers["mean_SSEs"] = 709.3458317162585
+    answers["mean_SSEs"] = mean_sse
 
     # A single float
-    answers["std_SSEs"] = 225.16301427272225
+    answers["std_SSEs"] = std_sse
 
     return answers
 
