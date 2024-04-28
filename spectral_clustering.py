@@ -325,7 +325,7 @@ def spectral_clustering(random_state = 42):
         plt.ylabel('Feature 2')
         plt.grid(True)
         plt.colorbar(label='Cluster Label')
-        plt.savefig("Question_1_Clustering_Result_for_1000_random_points.pdf")
+        plt.savefig("Question_1_Spectral_Clustering_Result_for_1000_random_points.pdf")
         plt.show()
         
     
@@ -339,7 +339,7 @@ def spectral_clustering(random_state = 42):
     plt.xlabel('Sigma (\u03C3)')
     plt.ylabel('SSE')
     plt.grid(True)
-    plt.savefig("Question_1_SSE_Values_Colored_by_Sigma.pdf")
+    plt.savefig("Question_1_Spectral_SSE_Values_Colored_by_Sigma.pdf")
     plt.show()
     
 
@@ -351,7 +351,7 @@ def spectral_clustering(random_state = 42):
     plt.xlabel('Sigma (\u03C3)')
     plt.ylabel('ARI')
     plt.grid(True)
-    plt.savefig("Question_1_ARI_Values_Colored_by_Sigma.pdf")
+    plt.savefig("Question_1_Spectral_ARI_Values_Colored_by_Sigma.pdf")
     plt.show()
     
 
@@ -370,7 +370,7 @@ def spectral_clustering(random_state = 42):
         plt.ylabel('Feature 2')
         plt.grid(True)
         plt.colorbar(label='Cluster Label')
-        plt.savefig("Question_1_Clustering_Result_with_Largest_ARI.pdf")
+        plt.savefig("Question_1_Spectral_Clustering_Result_with_Largest_ARI.pdf")
         plt.show()
         
 
@@ -382,7 +382,7 @@ def spectral_clustering(random_state = 42):
         plt.ylabel('Feature 2')
         plt.grid(True)
         plt.colorbar(label='Cluster Label')
-        plt.savefig("Question_1_Clustering_Result_with_smallest_SSE.pdf")
+        plt.savefig("Question_1_Spectral_Clustering_Result_with_smallest_SSE.pdf")
         plt.show()
         
         
