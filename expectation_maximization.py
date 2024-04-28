@@ -2,11 +2,39 @@ import pickle
 import numpy as np
 import matplotlib.pyplot as plt
 from numpy.typing import NDArray
-#from sklearn.metrics import confusion_matrix
+## from sklearn.metrics import confusion_matrix
 import scipy
 
 # ----------------------------------------------------------------------
+def confusion_matrix(true_labels, predicted_labels): ## implemented confusion matrix
+    """
+    Compute the confusion matrix for a two-class problem.
 
+    Parameters:
+    - true_labels: The true labels of the data points.
+    - predicted_labels: The predicted labels of the data points.
+
+    Returns:
+    - A 2x2 numpy array representing the confusion matrix.
+      [[true positive, false negative],
+       [false positive, true negative]]
+    """
+    # Initialize the confusion matrix to zeros
+    confusion = np.zeros((2, 2), dtype=int)
+
+    # True positives (TP)
+    confusion[0, 0] = np.sum((true_labels == 1) & (predicted_labels == 1))
+
+    # True negatives (TN)
+    confusion[1, 1] = np.sum((true_labels == 0) & (predicted_labels == 0))
+
+    # False positives (FP)
+    confusion[1, 0] = np.sum((true_labels == 0) & (predicted_labels == 1))
+
+    # False negatives (FN)
+    confusion[0, 1] = np.sum((true_labels == 1) & (predicted_labels == 0))
+
+    return confusion
 
 def compute_SSE(data, labels):
     """
@@ -352,7 +380,7 @@ def gaussian_mixture():
     # Save the plot to file "plot_log_likelihood.pdf", and add to your report.
     assert max_iter == log_likelihoods.shape[0]
     plot_likelihood = plt.plot(list(range(max_iter)), log_likelihoods)
-    plt.title("Log Likelihood vs. Iteration")
+    plt.title("Question 2 - Expectation Maximization : Log Likelihood vs. Iteration")
     plt.xlabel("Iteration")
     plt.ylabel("Log Likelihood")
     plt.grid(True)
