@@ -304,17 +304,12 @@ def spectral_clustering(random_state = 42):
     # Do the same for the cluster with the smallest value of SSE.
     # All plots must have x and y labels, a title, and the grid overlay.
 
-    # Plot is the return value of a call to plt.scatter()
-    plot_ARI = plt.scatter([1,2,3], [4,5,6])
-    plot_SSE = plt.scatter([1,2,3], [4,5,6])
-    answers["cluster scatterplot with largest ARI"] = plot_ARI
-    answers["cluster scatterplot with smallest SSE"] = plot_SSE
-
     # Plot of the eigenvalues (smallest to largest) as a line plot.
     # Use the plt.plot() function. Make sure to include a title, axis labels, and a grid.
     plt.title("Question 1 - Spectral - Plot of the eigenvalues")
     plot_eig = plt.plot([1,2,3], [4,5,6])
     plt.savefig("Question_1_Spectral_Plot_of_the_eigenvalues.pdf")
+    plt.show()
     answers["eigenvalue plot"] = plot_eig
 
     def plot_clustering(data, labels, title):
@@ -328,9 +323,58 @@ def spectral_clustering(random_state = 42):
         plt.savefig("Question_1_Spectral_Clustering_Result_for_1000_random_points.pdf")
         plt.show()
         
-    
     plot_clustering(data_slice, computed_labels, "Question 1 - Spectral - Clustering Result for 1000 random points")
 
+    best_ari_sigma = max(groups, key=lambda x: groups[x]['ARI'])
+    best_sse_sigma = min(groups, key=lambda x: groups[x]['SSE'])
+
+    # Print the best sigma values for debugging
+    print("Sigma with the largest ARI:", best_ari_sigma, "with ARI:", groups[best_ari_sigma]['ARI'])
+    print("Sigma with the smallest SSE:", best_sse_sigma, "with SSE:", groups[best_sse_sigma]['SSE'])
+
+    # Assuming `data` is loaded and `spectral` function is available
+    data_samples, label_samples = extract_samples(data, labels, 1000)  # Adjust number of samples as needed
+
+    """
+    def plot_cluster_results_ARI(data, labels, title):
+        plt.figure(figsize=(10, 8))
+        plt.scatter(data[:, 0], data[:, 1], c=labels, cmap='viridis', edgecolor='k', s=50)
+        plt.title(title)
+        plt.xlabel('Feature 1')
+        plt.ylabel('Feature 2')
+        plt.grid(True)
+        plt.colorbar(label='Cluster Label')
+        plt.savefig("Question_1_Spectral_Clustering_Result_with_Largest_ARI.pdf")
+        plt.show()
+    """
+
+    plt.figure(figsize=(10, 8))
+    computed_labels, _, _, _ = spectral(data_samples, label_samples, {'sigma': best_ari_sigma, 'k': 5})  # change here as needed
+    plot_ARI = plt.scatter(data_samples[:, 0], data_samples[:, 1], c=computed_labels, cmap='viridis', edgecolor='k', s=50)
+    plt.title(f"Question 1 - Spectral Clustering Result with Largest ARI (Sigma={best_ari_sigma})")
+    plt.xlabel('Feature 1')
+    plt.ylabel('Feature 2')
+    plt.grid(True)
+    # Create the colorbar using the scatter plot as the mappable
+    cbar = plt.colorbar(plot_ARI, label='Cluster Label')
+    plt.savefig("Question_1_Spectral_Clustering_Result_with_Largest_ARI.pdf")
+    plt.show()
+
+    # Cluster with smallest SSE
+    computed_labels, _, _, _ = spectral(data_samples, label_samples, {'sigma': best_sse_sigma, 'k': 5}) ## change here
+    plot_SSE = plt.scatter(data_samples[:, 0], data_samples[:, 1], c=computed_labels, cmap='viridis', edgecolor='k', s=50)
+    plt.title(f"Question 1 - Spectral - Clustering Result with Smallest SSE for 1000 points(Sigma={best_sse_sigma})")
+    plt.xlabel('Feature 1')
+    plt.ylabel('Feature 2')
+    plt.grid(True)
+    # Create the colorbar using the scatter plot as the mappable
+    cbar1 = plt.colorbar(plot_SSE, label='Cluster Label')
+    plt.savefig("Question_1_Spectral_Clustering_Result_with_smallest_SSE.pdf")
+    plt.show()
+    answers["cluster scatterplot with largest ARI"] = plot_ARI
+    answers["cluster scatterplot with smallest SSE"] = plot_SSE
+
+    """
     # Scatter plot colored by SSE values
     plt.figure(figsize=(10, 5))
     plt.scatter(sigma_values, sse_values, c=sse_values, cmap='viridis', s=100)
@@ -353,52 +397,8 @@ def spectral_clustering(random_state = 42):
     plt.grid(True)
     plt.savefig("Question_1_Spectral_ARI_Values_Colored_by_Sigma.pdf")
     plt.show()
-    
-
-    best_ari_sigma = max(groups, key=lambda x: groups[x]['ARI'])
-    best_sse_sigma = min(groups, key=lambda x: groups[x]['SSE'])
-
-    # Print the best sigma values for debugging
-    print("Sigma with the largest ARI:", best_ari_sigma, "with ARI:", groups[best_ari_sigma]['ARI'])
-    print("Sigma with the smallest SSE:", best_sse_sigma, "with SSE:", groups[best_sse_sigma]['SSE'])
-
-    def plot_cluster_results_ARI(data, labels, title):
-        plt.figure(figsize=(10, 8))
-        plt.scatter(data[:, 0], data[:, 1], c=labels, cmap='viridis', edgecolor='k', s=50)
-        plt.title(title)
-        plt.xlabel('Feature 1')
-        plt.ylabel('Feature 2')
-        plt.grid(True)
-        plt.colorbar(label='Cluster Label')
-        plt.savefig("Question_1_Spectral_Clustering_Result_with_Largest_ARI.pdf")
-        plt.show()
-        
-
-    def plot_cluster_results_SSE(data, labels, title):
-        plt.figure(figsize=(10, 8))
-        plt.scatter(data[:, 0], data[:, 1], c=labels, cmap='viridis', edgecolor='k', s=50)
-        plt.title(title)
-        plt.xlabel('Feature 1')
-        plt.ylabel('Feature 2')
-        plt.grid(True)
-        plt.colorbar(label='Cluster Label')
-        plt.savefig("Question_1_Spectral_Clustering_Result_with_smallest_SSE.pdf")
-        plt.show()
-        
-        
-
-    # Assuming `data` is loaded and `spectral` function is available
-    data_samples, label_samples = extract_samples(data, labels, 1000)  # Adjust number of samples as needed
-
-    # Cluster with largest ARI
-    computed_labels, _, _, _ = spectral(data_samples, label_samples, {'sigma': best_ari_sigma, 'k': 5}) ## change here
-    plot_cluster_results_ARI(data_samples, computed_labels, f"Question 1 - Spectral - Clustering Result with Largest ARI for 1000 points(Sigma={best_ari_sigma})")
-    
-
-    # Cluster with smallest SSE
-    computed_labels, _, _, _ = spectral(data_samples, label_samples, {'sigma': best_sse_sigma, 'k': 5}) ## change here
-    plot_cluster_results_SSE(data_samples, computed_labels, f"Question 1 - Spectral - Clustering Result with Smallest SSE for 1000 points(Sigma={best_sse_sigma})")
-
+    """
+ 
     # Pick the parameters that give the largest value of ARI, and apply these
     # parameters to datasets 1, 2, 3, and 4. Compute the ARI for each dataset.
     # Calculate mean and standard deviation of ARI for all five datasets.
