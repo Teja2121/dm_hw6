@@ -242,9 +242,9 @@ def spectral_clustering(random_state = 42):
         # Assuming data is already shuffled or slices are taken randomly
         data_slice = data[1000*i:1000*(i+1)]
         label_slice = labels[1000*i:1000*(i+1)]
-        computed_labels, SSE, ARI, _ = spectral(data_slice, label_slice, {'sigma': best_sigma_value, 'k': 5})
+        computed_labels, SSE, ARI, eigenvalues = spectral(data_slice, label_slice, {'sigma': best_sigma_value, 'k': 5})
         groups[i] = {"sigma": best_sigma_value, "ARI": ARI, "SSE": SSE}
-        slices_results.append((computed_labels, SSE, ARI))
+        slices_results.append((computed_labels, SSE, ARI, eigenvalues))
 
     # Process the results for the 10 slices
     # For example, you could calculate the mean and standard deviation of the ARI across the 10 slices
@@ -306,8 +306,16 @@ def spectral_clustering(random_state = 42):
 
     # Plot of the eigenvalues (smallest to largest) as a line plot.
     # Use the plt.plot() function. Make sure to include a title, axis labels, and a grid.
-    plt.title("Question 1 - Spectral - Plot of the eigenvalues")
-    plot_eig = plt.plot([1,2,3], [4,5,6])
+    all_eigenvalues = [result[3] for result in slices_results]
+    # Plot eigenvalues for each slice
+    eigenvalues_first_slice = sorted(all_eigenvalues[0])
+
+    plt.figure(figsize=(10, 8))
+    plt.title("Eigenvalues from the First Slice")
+    plt.xlabel('Index of Eigenvalue')
+    plt.ylabel('Magnitude of Eigenvalue')
+    plot_eig = plt.plot(eigenvalues_first_slice, marker='o')  # Use a marker to indicate each eigenvalue
+    plt.grid(True)
     plt.savefig("Question_1_Spectral_Plot_of_the_eigenvalues.pdf")
     plt.show()
     answers["eigenvalue plot"] = plot_eig
