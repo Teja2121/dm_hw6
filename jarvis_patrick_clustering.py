@@ -295,66 +295,7 @@ def jarvis_patrick_clustering(random_state = 42):
     print(f"Mean ARI: {mean_ari}")
     print(f"Standard Deviation of ARI: {std_ari}")
 
-    
-    best_ari_sigma = max(groups, key=lambda x: groups[x]['ARI'])
-    best_sse_sigma = min(groups, key=lambda x: groups[x]['SSE'])
-
-    def plot_clustering(data, labels, title):
-        plt.figure(figsize=(8, 6))
-        plt.scatter(data[:, 0], data[:, 1], c=labels, cmap='viridis', marker='o', edgecolor='k', s=50)
-        plt.title(title)
-        plt.xlabel('Feature 1')
-        plt.ylabel('Feature 2')
-        plt.grid(True)
-        plt.colorbar(label='Cluster Label')
-        plt.savefig("Question_1_Jarvis_Patrick_Clustering_Result_for_all_points.pdf")
-        plt.show()
-        
-    
-    plot_clustering(data_slice, computed_labels, "Question 1 - Jarvis Patrick - Clustering Result for 1000 random points")
-
-    # Print the best sigma values for debugging
-    print("Sigma with the largest ARI:", best_ari_sigma, "with ARI:", groups[best_ari_sigma]['ARI'])
-    print("Sigma with the smallest SSE:", best_sse_sigma, "with SSE:", groups[best_sse_sigma]['SSE'])
-
-    def plot_cluster_results_ARI(data, labels, title):
-        plt.figure(figsize=(10, 8))
-        plt.scatter(data[:, 0], data[:, 1], c=labels, cmap='viridis', edgecolor='k', s=50)
-        plt.title(title)
-        plt.xlabel('Feature 1')
-        plt.ylabel('Feature 2')
-        plt.grid(True)
-        plt.colorbar(label='Cluster Label')
-        plt.savefig("Question_1_Jarvis_Patrick_Clustering_Result_with_Largest_ARI.pdf")
-        plt.show()
-        
-
-    def plot_cluster_results_SSE(data, labels, title):
-        plt.figure(figsize=(10, 8))
-        plt.scatter(data[:, 0], data[:, 1], c=labels, cmap='viridis', edgecolor='k', s=50)
-        plt.title(title)
-        plt.xlabel('Feature 1')
-        plt.ylabel('Feature 2')
-        plt.grid(True)
-        plt.colorbar(label='Cluster Label')
-        plt.savefig("Question_1_Jarvis_Patrick_Clustering_Result_with_smallest_SSE.pdf")
-        plt.show()
-        
-        
-
-    # Assuming `data` is loaded and `spectral` function is available
-    data_samples, label_samples = extract_samples(data, labels, 1000)  # Adjust number of samples as needed
-
-    # Cluster with largest ARI
-    computed_labels, _, _ = jarvis_patrick(data_samples, label_samples, {'k': 8, 'smin' : 4}) ## change here
-    plot_cluster_results_ARI(data_samples, computed_labels, f"Question 1 - Jarvis Patrick - Clustering Result with Largest ARI for 1000 points(Sigma={best_ari_sigma})")
-    
-
-    # Cluster with smallest SSE
-    computed_labels, _, _= jarvis_patrick(data_samples, label_samples, {'k': 8, 'smin' : 4}) ## change here
-    plot_cluster_results_SSE(data_samples, computed_labels, f"Question 1 - Jarvis Patrick - Clustering Result with Smallest SSE for 1000 points(Sigma={best_sse_sigma})")
-
-    # data for data group 0: data[0:10000]. For example,
+        # data for data group 0: data[0:10000]. For example,
     # groups[0] = {"sigma": 0.1, "xi": 0.1, "ARI": 0.1, "SSE": 0.1}
 
     # data for data group i: data[10000*i: 10000*(i+1)], i=1, 2, 3, 4.
@@ -375,10 +316,53 @@ def jarvis_patrick_clustering(random_state = 42):
     # All plots must have x and y labels, a title, and the grid overlay.
 
 
+    
+    best_ari_sigma = max(groups, key=lambda x: groups[x]['ARI'])
+    best_sse_sigma = min(groups, key=lambda x: groups[x]['SSE'])
+
+    def plot_clustering(data, labels, title):
+        plt.figure(figsize=(8, 6))
+        plt.scatter(data[:, 0], data[:, 1], c=labels, cmap='viridis', marker='o', edgecolor='k', s=50)
+        plt.title(title)
+        plt.xlabel('Feature 1')
+        plt.ylabel('Feature 2')
+        plt.grid(True)
+        plt.colorbar(label='Cluster Label')
+        plt.savefig("Question_1_Jarvis_Patrick_Clustering_Result_for_1000_random_points.pdf")
+        plt.show()
+        
+    
+    plot_clustering(data_slice, computed_labels, "Question 1 - Jarvis Patrick - Clustering Result for 1000 random points")
+
+    # Print the best sigma values for debugging
+    print("Sigma with the largest ARI:", best_ari_sigma, "with ARI:", groups[best_ari_sigma]['ARI'])
+    print("Sigma with the smallest SSE:", best_sse_sigma, "with SSE:", groups[best_sse_sigma]['SSE'])
+
+    plt.figure(figsize=(10, 8))
+    computed_labels, _, _ = jarvis_patrick(data_samples, label_samples, {'k': 8, 'smin' : 4})  # change here as needed
+    plot_ARI = plt.scatter(data_samples[:, 0], data_samples[:, 1], c=computed_labels, cmap='viridis', edgecolor='k', s=50)
+    plt.title(f"Question 1 - Jarvis Patrick - Clustering Result with Largest ARI for 1000 points(Sigma={best_ari_sigma})")
+    plt.xlabel('Feature 1')
+    plt.ylabel('Feature 2')
+    plt.grid(True)
+    # Create the colorbar using the scatter plot as the mappable
+    cbar = plt.colorbar(plot_ARI, label='Cluster Label')
+    plt.savefig("Question_1_Jarvis_Patrick_Clustering_Result_with_Largest_ARI.pdf")
+    plt.show()
+
+    # Cluster with smallest SSE
+    computed_labels, _, _= jarvis_patrick(data_samples, label_samples, {'k': 8, 'smin' : 4}) ## change here
+    plot_SSE = plt.scatter(data_samples[:, 0], data_samples[:, 1], c=computed_labels, cmap='viridis', edgecolor='k', s=50)
+    plt.title(f"Question 1 - Jarvis Patrick - Clustering Result with Smallest SSE for 1000 points(Sigma={best_sse_sigma})")
+    plt.xlabel('Feature 1')
+    plt.ylabel('Feature 2')
+    plt.grid(True)
+    # Create the colorbar using the scatter plot as the mappable
+    cbar1 = plt.colorbar(plot_SSE, label='Cluster Label')
+    plt.savefig("Question_1_Jarvis_Patrick_Clustering_Result_with_smallest_SSE.pdf")
+    plt.show()
 
     # Plot is the return value of a call to plt.scatter()
-    plot_ARI = plt.scatter([1,2,3], [4,5,6])
-    plot_SSE = plt.scatter([1,2,3], [4,5,6])
     answers["cluster scatterplot with largest ARI"] = plot_ARI
     answers["cluster scatterplot with smallest SSE"] = plot_SSE
 
