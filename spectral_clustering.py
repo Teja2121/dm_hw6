@@ -310,14 +310,22 @@ def spectral_clustering(random_state = 42):
     # Plot eigenvalues for each slice
     eigenvalues_first_slice = sorted(all_eigenvalues[0])
 
+    # Start a new figure
     plt.figure(figsize=(10, 8))
+    # Create the line plot
+    # Since plt.plot returns a list of Line2D objects, we take the first one
+    plot_eig = plt.plot(eigenvalues_first_slice, marker='o', linestyle='-')[0]
+    #plt.plot(eigenvalues_first_slice, marker='o', linestyle='-')  # Use a line and marker
+    # Add title and labels
     plt.title("Eigenvalues from the First Slice")
     plt.xlabel('Index of Eigenvalue')
     plt.ylabel('Magnitude of Eigenvalue')
-    plot_eig = plt.plot(eigenvalues_first_slice, marker='o')  # Use a marker to indicate each eigenvalue
+    # Enable grid
     plt.grid(True)
+    # Save the plot to a file
     plt.savefig("Question_1_Spectral_Plot_of_the_eigenvalues.pdf")
-    plt.show()
+    # Show the plot
+    plt.show() 
     answers["eigenvalue plot"] = plot_eig
 
     def plot_clustering(data, labels, title):
