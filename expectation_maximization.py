@@ -2,39 +2,10 @@ import pickle
 import numpy as np
 import matplotlib.pyplot as plt
 from numpy.typing import NDArray
-## from sklearn.metrics import confusion_matrix
-import scipy
+from sklearn.metrics import confusion_matrix
 
 # ----------------------------------------------------------------------
-def confusion_matrix(true_labels, predicted_labels): ## implemented confusion matrix
-    """
-    Compute the confusion matrix for a two-class problem.
 
-    Parameters:
-    - true_labels: The true labels of the data points.
-    - predicted_labels: The predicted labels of the data points.
-
-    Returns:
-    - A 2x2 numpy array representing the confusion matrix.
-      [[true positive, false negative],
-       [false positive, true negative]]
-    """
-    # Initialize the confusion matrix to zeros
-    confusion = np.zeros((2, 2), dtype=int)
-
-    # True positives (TP)
-    confusion[0, 0] = np.sum((true_labels == 1) & (predicted_labels == 1))
-
-    # True negatives (TN)
-    confusion[1, 1] = np.sum((true_labels == 0) & (predicted_labels == 0))
-
-    # False positives (FP)
-    confusion[1, 0] = np.sum((true_labels == 0) & (predicted_labels == 1))
-
-    # False negatives (FN)
-    confusion[0, 1] = np.sum((true_labels == 1) & (predicted_labels == 0))
-
-    return confusion
 
 def compute_SSE(data, labels):
     """
@@ -55,9 +26,9 @@ def compute_SSE(data, labels):
         sse += np.sum((cluster_points - cluster_center) ** 2)
     return sse
 
-"""
-def compute_ARI(confusion_matrix: NDArray[np.int32]):
 
+def compute_ARI(confusion_matrix: NDArray[np.int32]):
+    """
     Compute the Adjusted Rand Index (ARI) metric for evaluating the performance of a clustering algorithm.
     (I AM NOT CONVINCED THE RESULTS ARE CORRECT)
 
@@ -79,14 +50,13 @@ def compute_ARI(confusion_matrix: NDArray[np.int32]):
     - tn: True negatives (number of pairs of samples that are not in the same cluster in both the true and predicted labels)
     - fp: False positives (number of pairs of samples that are in the same cluster in the true labels but not in the predicted labels)
     - fn: False negatives (number of pairs of samples that are not in the same cluster in the true labels but in the predicted labels)
-
+    """
     tp = confusion_matrix[0, 0]
     tn = confusion_matrix[1, 1]
     fp = confusion_matrix[0, 1]
     fn = confusion_matrix[1, 0]
     ari = (tp * tn - fp * fn) / np.sqrt((tp + fp) * (tp + fn) * (tn + fp) * (tn + fn))
     return ari
-"""
 
 
 def adjusted_rand_index(labels_true, labels_pred) -> float:
@@ -299,7 +269,7 @@ def em_algorithm(data: NDArray[np.floating], max_iter: int = 100) -> tuple[
 
 
 # ----------------------------------------------------------------------
-def gaussian_mixture(random_state=42): ##added random state 42 for reproducability
+def gaussian_mixture():
     """
     Calculate the parameters of a Gaussian mixture model using the EM algorithm.
     Specialized to two distributions.
@@ -311,12 +281,10 @@ def gaussian_mixture(random_state=42): ##added random state 42 for reproducabili
     data = np.load("question2_cluster_data.npy")
     labels = np.load("question2_cluster_labels.npy")
 
-    np.random.seed(random_state) ## added random state
-
     print(f"Data shape: {data.shape}")
     print(f"Labels shape: {labels.shape}")
 
-    def sample_estimate(data, labels, nb_samples=5000, max_iter=100): ## change made here from 10000 to 5000
+    def sample_estimate(data, labels, nb_samples=10000, max_iter=100):
         # ADD STUDENT CODE
         data_samples, label_samples = extract_samples(data, labels, nb_samples)
         weights, means, covariances, log_likelihoods, predicted_labels = em_algorithm(
@@ -354,7 +322,7 @@ def gaussian_mixture(random_state=42): ##added random state 42 for reproducabili
         return weights, means, covariances, log_likelihoods, confusion_mat, ARI, SSE
 
     # Call the function
-    data_samples, label_samples = extract_samples(data, labels, 5000)
+    data_samples, label_samples = extract_samples(data, labels, 10000)
 
     print(f"Data shape: {data_samples.shape}")
     print(f"Labels shape: {label_samples.shape}")
@@ -383,19 +351,17 @@ def gaussian_mixture(random_state=42): ##added random state 42 for reproducabili
     # Save the plot to file "plot_log_likelihood.pdf", and add to your report.
     assert max_iter == log_likelihoods.shape[0]
     plot_likelihood = plt.plot(list(range(max_iter)), log_likelihoods)
-    plt.title("Question 2 - Expectation Maximization : Log Likelihood vs. Iteration")
+    plt.title("Log Likelihood vs. Iteration")
     plt.xlabel("Iteration")
     plt.ylabel("Log Likelihood")
     plt.grid(True)
-    plt.savefig("Question_2_plot_log_likelihood.pdf")
-    plt.show() ## added this extra line to show the plot
     answers["plot_log_likelihood"] = plot_likelihood
-    
+    plt.savefig("plot_log_likelihood.pdf")
 
     # --------------------------------------------------------------
-    # 10 trials of 5000 points each ##Changed to 5000 points
+    # 10 trials of 10,000 points each
     nb_trials = 10
-    nb_samples = 5000 ## changed to 5000 points 
+    nb_samples = 10000
     max_iter = max_iter
 
     means_lst = []
@@ -467,9 +433,6 @@ def gaussian_mixture(random_state=42): ##added random state 42 for reproducabili
 
     # Return a 2x2 numpy Array of floats. Average of the confusion matrices of the 10 trials
     answers["average_confusion_matrix"] = np.mean(confusion_lst, axis=0)
-    print(f"{confusion_lst=}")
-    print(f"Average confusion matrix : {np.mean(confusion_lst, axis=0)}")
-    print(f"Standard confusion matrix : {np.std(confusion_lst, axis=0)}")
 
     # Return a 2x2 numpy Array of floats. Standard deviation of the confusion matrices of the 10 trials
     # This means to take the standard deviation of each element of the confusion matrix.
@@ -478,19 +441,18 @@ def gaussian_mixture(random_state=42): ##added random state 42 for reproducabili
 
     # Return a list of 10 ARIs (float), one for each sample of 5,000 points
     answers["ARI"] = ARI_lst
-    print(f"{ARI_lst=}") ## added a print statement
 
     # Return a list of 10 SSEs (float), one for each sample of 5,000 points
     answers["SSE"] = SSE_lst
-    print(f"{SSE_lst=}") ## uncommented print statement
+    # print(f"{SSE_lst=}")
 
     # Return the mean and standard deviation of the 10 trials (of 5000 points each)
     answers["avg_std_ARI"] = [avg_ARI, std_ARI]
-    print(f"{avg_ARI=}, {std_ARI=} ") ## uncommented print statement
+    # print(f"{avg_ARI=}, {std_ARI=} ")
 
     # Return the mean and standard deviation of the 10 trials (of 5000 points each)
     answers["avg_std_SSE"] = [avg_SSE, std_SSE]
-    print(f"{avg_SSE=}, {std_SSE=}") ## uncommented print statement
+    # print(f"{avg_SSE=}, {std_SSE=}")
 
     return answers
 
