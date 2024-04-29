@@ -360,7 +360,13 @@ def gaussian_mixture(random_state=42): ##added random state 42 for reproducabili
     print(f"Labels shape: {label_samples.shape}")
 
     # ADD STUDENT CODE
-    plot = plt.scatter(data_samples[:, 0], data_samples[:, 1], c=label_samples, s=0.1)
+    plot = plt.scatter(data_samples[:, 0], data_samples[:, 1], c=label_samples, s=1)
+    plt.title("Question 2 - Expectation Maximization : Gaussian Mixture Plot Original Cluster")
+    plt.grid(True)
+    plt.xlabel("x1")
+    plt.ylabel("x2")
+    plt.savefig("Question_2_Expectation_Maximization_Gaussian_Mixture_Plot_Original_Cluster.pdf")
+    plt.show()
     answers["plot_original_cluster"] = plot
 
     # --------------------------------------------------------------
@@ -374,6 +380,7 @@ def gaussian_mixture(random_state=42): ##added random state 42 for reproducabili
     )
 
     # 1D numpy array of floats
+    print("The log_likelihoods is : ", log_likelihoods)
     answers["log_likelihood"] = log_likelihoods
 
     # --------------------------------------------------------------
@@ -435,8 +442,9 @@ def gaussian_mixture(random_state=42): ##added random state 42 for reproducabili
     # list with the mean and standard deviation (over 10 trials) of the mean vector
     # of the first distribution
     answers["probability_1_mean"] = [avg_means[0].tolist(), std_means[0].tolist()]
-    # print("answers probability_1_mean", answers["probability_1_mean"])
+    print("answers probability_1_mean : ", answers["probability_1_mean"])
     answers["probability_2_mean"] = [avg_means[0].tolist(), std_means[1].tolist()]
+    print("answers probability_2_mean : ", answers["probability_2_mean"])
 
     # list with the mean and standard deviation (over 10 trials) of the covariance matrix
     # of the first distribution. The covariance matrix should be in the standard order.
@@ -451,8 +459,8 @@ def gaussian_mixture(random_state=42): ##added random state 42 for reproducabili
         std_covariances[1],
     ]
 
-    # print(f"{answers['probability_1_covariance']=}")
-    # print(f"{answers['probability_2_covariance']=}")
+    print(f"{answers['probability_1_covariance']=}")
+    print(f"{answers['probability_2_covariance']=}")
 
     # list with the mean and standard deviation (over 10 trials) of the amplitude \rho_1
     # of the first distribution.
@@ -464,6 +472,11 @@ def gaussian_mixture(random_state=42): ##added random state 42 for reproducabili
         avg_weights[1].tolist(),
         std_weights[1].tolist(),
     ]
+
+    print("probability_1_amplitude: ")
+    print(answers["probability_1_amplitude"])
+    print("probability_2_amplitude: ")
+    print(answers["probability_1_amplitude"])
 
     # Return a 2x2 numpy Array of floats. Average of the confusion matrices of the 10 trials
     answers["average_confusion_matrix"] = np.mean(confusion_lst, axis=0)
