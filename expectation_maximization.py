@@ -6,35 +6,20 @@ from numpy.typing import NDArray
 import scipy
 
 # ----------------------------------------------------------------------
-def confusion_matrix(true_labels, predicted_labels): ## implemented confusion matrix
-    """
-    Compute the confusion matrix for a two-class problem.
+def confusion_matrix(true_labels, predicted_labels):
+    # Extract the unique classes
+    classes = np.unique(np.concatenate((true_labels, predicted_labels)))
+    # Initialize the confusion matrix with zeros
+    conf_matrix = np.zeros((len(classes), len(classes)), dtype=int)
 
-    Parameters:
-    - true_labels: The true labels of the data points.
-    - predicted_labels: The predicted labels of the data points.
+    # Map each class to an index
+    class_index = {cls: idx for idx, cls in enumerate(classes)}
 
-    Returns:
-    - A 2x2 numpy array representing the confusion matrix.
-      [[true positive, false negative],
-       [false positive, true negative]]
-    """
-    # Initialize the confusion matrix to zeros
-    confusion = np.zeros((2, 2), dtype=int)
+    # Populate the confusion matrix
+    for true, pred in zip(true_labels, predicted_labels):
+        conf_matrix[class_index[true]][class_index[pred]] += 1
 
-    # True positives (TP)
-    confusion[0, 0] = np.sum((true_labels == 1) & (predicted_labels == 1))
-
-    # True negatives (TN)
-    confusion[1, 1] = np.sum((true_labels == 0) & (predicted_labels == 0))
-
-    # False positives (FP)
-    confusion[1, 0] = np.sum((true_labels == 0) & (predicted_labels == 1))
-
-    # False negatives (FN)
-    confusion[0, 1] = np.sum((true_labels == 1) & (predicted_labels == 0))
-
-    return confusion
+    return conf_matrix
 
 def compute_SSE(data, labels):
     """
