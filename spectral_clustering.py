@@ -10,41 +10,15 @@ import pickle
 import scipy
 from scipy.spatial.distance import pdist, squareform
 from scipy.sparse.csgraph import laplacian
-from scipy.sparse.linalg import eigsh
+from scipy.linalg import eigh
 from scipy.cluster.vq import kmeans2
 
 ######################################################################
 #####     CHECK THE PARAMETERS     ########
 ######################################################################
-def confusion_matrix(true_labels, predicted_labels): ## implemented confusion matrix
-    """
-    Compute the confusion matrix for a two-class problem.
-
-    Parameters:
-    - true_labels: The true labels of the data points.
-    - predicted_labels: The predicted labels of the data points.
-
-    Returns:
-    - A 2x2 numpy array representing the confusion matrix.
-      [[true positive, false negative],
-       [false positive, true negative]]
-    """
-    # Initialize the confusion matrix to zeros
-    confusion = np.zeros((2, 2), dtype=int)
-
-    # True positives (TP)
-    confusion[0, 0] = np.sum((true_labels == 1) & (predicted_labels == 1))
-
-    # True negatives (TN)
-    confusion[1, 1] = np.sum((true_labels == 0) & (predicted_labels == 0))
-
-    # False positives (FP)
-    confusion[1, 0] = np.sum((true_labels == 0) & (predicted_labels == 1))
-
-    # False negatives (FN)
-    confusion[0, 1] = np.sum((true_labels == 1) & (predicted_labels == 0))
-
-    return confusion
+def proximity_max(x, y, sigma):
+    dist_squared = np.sum((x - y) ** 2)
+    return np.exp(-dist_squared / (2 * sigma ** 2))
 
 def compute_SSE(data, labels):
     """
@@ -158,27 +132,26 @@ def spectral(
     sigma = params_dict['sigma']
     k = params_dict['k']
 
-    # Calculate the affinity matrix using the Gaussian (RBF) kernel
-    pairwise_dists = squareform(pdist(data, 'euclidean'))
-    affinity_matrix = np.exp(-pairwise_dists**2 / (2. * sigma**2))
+    # Construct the similarity matrix
+    n_samples = data.shape[0]
+    similarity_matrix = np.zeros((n_samples, n_samples))
+    for i in range(n_samples):
+        for j in range(n_samples):
+           similarity_matrix[i, j] = proximity_max(data[i], data[j], sigma)
     
     # Compute the Laplacian matrix
-    laplacian_matrix = laplacian(affinity_matrix, normed=True)
+    degree_mat = np.diag(np.sum(similarity_matrix, axis=1))
+    laplacian_matrix = degree_mat - similarity_matrix
     
     # Compute the eigenvalues and eigenvectors
-    eigenvalues, eigenvectors = eigsh(laplacian_matrix, k=k, which='SM')
+    eigenvalues, eigenvectors = eigh(laplacian_matrix)
     
     # Use the eigenvectors corresponding to the k smallest eigenvalues to cluster with k-means
-    _, computed_labels = kmeans2(eigenvectors, k, minit='points')
+    _, computed_labels = kmeans2(eigenvectors[:, 1:k], k, minit='++')
 
     SSE = compute_SSE(data, computed_labels)
 
     ARI = adjusted_rand_index(labels, computed_labels)
-
-    computed_labels: NDArray[np.int32] ##| None = None
-    SSE: float ##| None = None
-    ARI: float ##| None = None
-    eigenvalues: NDArray[np.floating] ##| None = None
 
     return computed_labels, SSE, ARI, eigenvalues
 
@@ -238,12 +211,14 @@ def spectral_clustering(random_state = 42):
 
     # Now use the best_sigma_value to perform clustering on each of the 10 slices
     slices_results = []
-    for i in range(10):
+    plots_values={}
+    for i in range(5):
         # Assuming data is already shuffled or slices are taken randomly
         data_slice = data[1000*i:1000*(i+1)]
         label_slice = labels[1000*i:1000*(i+1)]
         computed_labels, SSE, ARI, eigenvalues = spectral(data_slice, label_slice, {'sigma': best_sigma_value, 'k': 5})
         groups[i] = {"sigma": best_sigma_value, "ARI": ARI, "SSE": SSE}
+        plots_values[i] = {"computed_labels": computed_labels, "ARI": ARI, "SSE": SSE,"eig_values":eigenvalues} 
         slices_results.append((computed_labels, SSE, ARI, eigenvalues))
 
     # Process the results for the 10 slices
@@ -288,7 +263,7 @@ def spectral_clustering(random_state = 42):
 
     # groups is the dictionary above
     answers["cluster parameters"] = groups
-    answers["1st group, SSE"] = {}
+    answers["1st group, SSE"] = groups[0]["SSE"]
     # answers["1st group, SSE"] = slices_results
 
     # Identify the cluster with the lowest value of ARI. This implies
@@ -306,20 +281,20 @@ def spectral_clustering(random_state = 42):
 
     # Plot of the eigenvalues (smallest to largest) as a line plot.
     # Use the plt.plot() function. Make sure to include a title, axis labels, and a grid.
-    all_eigenvalues = [result[3] for result in slices_results]
-    # Plot eigenvalues for each slice
-    eigenvalues_first_slice = sorted(all_eigenvalues[0])
+
 
     # Start a new figure
     plt.figure(figsize=(10, 8))
-    # Create the line plot
+    for i, group_info in plots_values.items():
+        plot_eig = plt.plot(np.sort(group_info["eig_values"]), label=f'Dataset {i+1}')
     # Since plt.plot returns a list of Line2D objects, we take the first one
-    plot_eig = plt.plot(eigenvalues_first_slice, marker='o', linestyle='-')[0]
+    #plot_eig = plt.plot(eigenvalues_first_slice, marker='o', linestyle='-')[0]
     #plt.plot(eigenvalues_first_slice, marker='o', linestyle='-')  # Use a line and marker
     # Add title and labels
-    plt.title("Eigenvalues from the First Slice")
+    plt.title("Question 1 Eigenvalues")
     plt.xlabel('Index of Eigenvalue')
     plt.ylabel('Magnitude of Eigenvalue')
+    plt.legend()
     # Enable grid
     plt.grid(True)
     # Save the plot to a file
@@ -327,19 +302,6 @@ def spectral_clustering(random_state = 42):
     # Show the plot
     plt.show() 
     answers["eigenvalue plot"] = plot_eig
-
-    def plot_clustering(data, labels, title):
-        plt.figure(figsize=(8, 6))
-        plt.scatter(data[:, 0], data[:, 1], c=labels, cmap='viridis', marker='o', edgecolor='k', s=50)
-        plt.title(title)
-        plt.xlabel('Feature 1')
-        plt.ylabel('Feature 2')
-        plt.grid(True)
-        plt.colorbar(label='Cluster Label')
-        plt.savefig("Question_1_Spectral_Clustering_Result_for_1000_random_points.pdf")
-        plt.show()
-        
-    plot_clustering(data_slice, computed_labels, "Question 1 - Spectral - Clustering Result for 1000 random points")
 
     best_ari_sigma = max(groups, key=lambda x: groups[x]['ARI'])
     best_sse_sigma = min(groups, key=lambda x: groups[x]['SSE'])
@@ -362,11 +324,18 @@ def spectral_clustering(random_state = 42):
         plt.colorbar(label='Cluster Label')
         plt.savefig("Question_1_Spectral_Clustering_Result_with_Largest_ARI.pdf")
         plt.show()
-    """
+    """ 
+    highest_ari = -1
+    best_dataset_index = None
+    for i, group_info in plots_values.items():
+        if group_info['ARI'] > highest_ari:
+            highest_ari = group_info['ARI']
+            best_dataset_index = i
 
     plt.figure(figsize=(10, 8))
-    computed_labels, _, _, _ = spectral(data_samples, label_samples, {'sigma': best_ari_sigma, 'k': 5})  # change here as needed
-    plot_ARI = plt.scatter(data_samples[:, 0], data_samples[:, 1], c=computed_labels, cmap='viridis', edgecolor='k', s=50)
+    plot_ARI = plt.scatter(data[best_dataset_index * 1000: (best_dataset_index + 1) * 1000, 0], 
+                data[best_dataset_index * 1000: (best_dataset_index + 1) * 1000, 1], 
+                c=plots_values[best_dataset_index]["computed_labels"], cmap='viridis', edgecolor='k', s=50)
     plt.title(f"Question 1 - Spectral Clustering Result with Largest ARI (Sigma={best_ari_sigma})")
     plt.xlabel('Feature 1')
     plt.ylabel('Feature 2')
@@ -376,10 +345,19 @@ def spectral_clustering(random_state = 42):
     plt.savefig("Question_1_Spectral_Clustering_Result_with_Largest_ARI.pdf")
     plt.show()
 
+    # Find the dataset with the lowest SSE
+    lowest_sse = float('inf')
+    best_dataset_index_sse = None
+    for i, group_info in plots_values.items():
+        if group_info['SSE'] < lowest_sse:
+            lowest_sse = group_info['SSE']
+            best_dataset_index_sse = i
+
     # Cluster with smallest SSE
-    computed_labels, _, _, _ = spectral(data_samples, label_samples, {'sigma': best_sse_sigma, 'k': 5}) ## change here
-    plot_SSE = plt.scatter(data_samples[:, 0], data_samples[:, 1], c=computed_labels, cmap='viridis', edgecolor='k', s=50)
-    plt.title(f"Question 1 - Spectral - Clustering Result with Smallest SSE for 1000 points(Sigma={best_sse_sigma})")
+    plot_SSE = plt.scatter(data[best_dataset_index_sse * 1000: (best_dataset_index_sse + 1) * 1000, 0], 
+                data[best_dataset_index_sse * 1000: (best_dataset_index_sse + 1) * 1000, 1], 
+                c=plots_values[best_dataset_index_sse]["computed_labels"], cmap='viridis', edgecolor='k', s=50)
+    plt.title(f"Question 1 - Spectral - Clustering Result with Smallest SSE for 1000 points")
     plt.xlabel('Feature 1')
     plt.ylabel('Feature 2')
     plt.grid(True)
