@@ -216,6 +216,7 @@ def jarvis_patrick_clustering():
     least_sse_index=np.argmin(sse_numpy)
     highest_ari_index=np.argmax(ari_numpy)
 
+    plt.figure(figsize=(10, 8))
     plot_ARI=plt.scatter(data[1000*highest_ari_index:(highest_ari_index+1)*1000, 0], data[1000*highest_ari_index:(highest_ari_index+1)*1000, 1], c=fin_prd[highest_ari_index], cmap='viridis', marker='.')
     plt.title(f"Question 1 - Jarvis Patrick - Largest ARI")
     plt.xlabel(f'Feature 1 for Dataset{i+1}')
@@ -225,7 +226,7 @@ def jarvis_patrick_clustering():
     plt.savefig("Question_1_Jarvis_Patrick_Clustering_Result_with_Largest_ARI.pdf")
     plt.show()
 
-
+    plt.figure(figsize=(10, 8))
     plot_SSE=plt.scatter(data[1000*least_sse_index:(least_sse_index+1)*1000, 0], data[1000*least_sse_index:(least_sse_index+1)*1000, 1], c=fin_prd[least_sse_index], cmap='viridis', marker='.')
     plt.xlabel(f'Feature 1 for Dataset{i+1}')
     plt.ylabel(f'Feature 2 for Dataset{i+1}')
