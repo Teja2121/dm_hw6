@@ -291,7 +291,7 @@ def spectral_clustering(random_state = 42):
     #plot_eig = plt.plot(eigenvalues_first_slice, marker='o', linestyle='-')[0]
     #plt.plot(eigenvalues_first_slice, marker='o', linestyle='-')  # Use a line and marker
     # Add title and labels
-    plt.title("Question 1 Eigenvalues")
+    plt.title("Question 1 - Spectral - Eigenvalues")
     plt.xlabel('Index of Eigenvalue')
     plt.ylabel('Magnitude of Eigenvalue')
     plt.legend()
@@ -354,6 +354,7 @@ def spectral_clustering(random_state = 42):
             best_dataset_index_sse = i
 
     # Cluster with smallest SSE
+    plt.figure(figsize=(10, 8))
     plot_SSE = plt.scatter(data[best_dataset_index_sse * 1000: (best_dataset_index_sse + 1) * 1000, 0], 
                 data[best_dataset_index_sse * 1000: (best_dataset_index_sse + 1) * 1000, 1], 
                 c=plots_values[best_dataset_index_sse]["computed_labels"], cmap='viridis', edgecolor='k', s=50)
