@@ -345,6 +345,7 @@ def gaussian_mixture(random_state=42): ##added random state 42 for reproducabili
     print(f"Labels shape: {label_samples.shape}")
 
     # ADD STUDENT CODE
+    plt.figure(figsize=(10, 8))
     plot = plt.scatter(data_samples[:, 0], data_samples[:, 1], c=label_samples, s=1)
     plt.title("Question 2 - Expectation Maximization : Gaussian Mixture Plot Original Cluster")
     plt.grid(True)
@@ -374,6 +375,7 @@ def gaussian_mixture(random_state=42): ##added random state 42 for reproducabili
     # Make sure to include title, axis labels, and a grid.
     # Save the plot to file "plot_log_likelihood.pdf", and add to your report.
     assert max_iter == log_likelihoods.shape[0]
+    plt.figure(figsize=(10, 8))
     plot_likelihood = plt.plot(list(range(max_iter)), log_likelihoods)
     plt.title("Question 2 - Expectation Maximization : Log Likelihood vs. Iteration")
     plt.xlabel("Iteration")
